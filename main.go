@@ -20,7 +20,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/event", a.TestEvents).Methods(http.MethodPost)
+	r.HandleFunc("/api/events", a.TestEvents).Methods(http.MethodPost)
 	r.HandleFunc("/api/events", a.Events).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/event", a.CreateEvent).Methods(http.MethodPost)

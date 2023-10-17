@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"statForMarket/internal/model"
 	"statForMarket/internal/repository"
+	"statForMarket/internal/utils"
 )
 
 type Application struct {
@@ -21,14 +23,15 @@ func (a *Application) Run(ctx context.Context) {
 func (a *Application) TestEvents(w http.ResponseWriter, r *http.Request) {
 	var count int
 	if err := json.NewDecoder(r.Body).Decode(&count); err != nil {
+		log.Println(err)
 		http.Error(w, fmt.Sprintf("Ошибка при парсинге тела запроса: %s", err), http.StatusBadRequest)
 		return
 	}
 
-	events := generateEvents(count)
-
+	events := utils.GenerateEvents(count)
 	if err := a.Repository.TestEvents(events); err != nil {
-		http.Error(w, fmt.Sprintf("Ошибка при добавлении события: %s", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("Ошибка при добавлении событий: %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -38,11 +41,13 @@ func (a *Application) TestEvents(w http.ResponseWriter, r *http.Request) {
 func (a *Application) Events(w http.ResponseWriter, r *http.Request) {
 	event := new(model.Event)
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		log.Println(err)
 		http.Error(w, fmt.Sprintf("Ошибка при парсинге тела запроса: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	if err := a.Repository.CreateEvent(event); err != nil {
+		log.Println(err)
 		http.Error(w, fmt.Sprintf("Ошибка при добавлении события: %s", err), http.StatusInternalServerError)
 		return
 	}
@@ -57,23 +62,11 @@ func (a *Application) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	event.EventID = utils.GenerateEventID()
 	if err := a.Repository.CreateEvent(event); err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка при добавлении события: %s", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func generateEvents(count int) []*model.Event {
-	events := make([]*model.Event, count)
-
-	for i := 0; i < count; i++ {
-		event := new(model.Event)
-
-		events[i] = event
-	}
-
-	return events
-
 }

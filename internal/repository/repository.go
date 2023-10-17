@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"os"
 	"statForMarket/internal/model"
+	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -40,18 +41,19 @@ func InitRepository() *sql.DB {
 
 func (r *Repository) TestEvents(events []*model.Event) error {
 	var values []interface{}
-	query := `INSERT INTO events (eventType, userID, eventTime, payload) VALUES;`
+	query := `INSERT INTO events (eventID, eventType, userID, eventTime, payload) VALUES `
 	for _, event := range events {
-
-		query += "(?, ?, ?, ?),"
-		values = append(values, event.EventType, event.UserID, event.EventTime, event.Payload)
+		query += "(?, ?, ?, ?, ?), "
+		values = append(values, event.EventID, event.EventType, event.UserID, event.EventTime, event.Payload)
 	}
+	query = strings.TrimSuffix(query, ", ") + ";"
+
 	_, err := r.Conn.Exec(query, values...)
 	return err
 }
 
 func (r *Repository) CreateEvent(event *model.Event) error {
-	query := `INSERT INTO events (eventType, userID, eventTime, payload) VALUES (?, ?, ?, ?);`
-	_, err := r.Conn.Exec(query, event.EventType, event.UserID, event.EventTime, event.Payload)
+	query := `INSERT INTO events (eventID, eventType, userID, eventTime, payload) VALUES (?, ?, ?, ?, ?);`
+	_, err := r.Conn.Exec(query, event.EventID, event.EventType, event.UserID, event.EventTime, event.Payload)
 	return err
 }
