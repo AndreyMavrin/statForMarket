@@ -7,3 +7,9 @@ type Event struct {
 	EventTime string `json:"eventTime"`
 	Payload   string `json:"payload"`
 }
+
+type EventFilter struct {
+	EventType string `json:"eventType"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+}

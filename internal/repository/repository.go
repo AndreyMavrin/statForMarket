@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"statForMarket/internal/model"
 	"strings"
@@ -50,6 +51,36 @@ func (r *Repository) TestEvents(events []*model.Event) error {
 
 	_, err := r.Conn.Exec(query, values...)
 	return err
+}
+
+func (r *Repository) Events(filter *model.EventFilter) ([]*model.Event, error) {
+	events := make([]*model.Event, 0)
+	query := `SELECT * FROM events `
+	if filter.EventType != "" && filter.From == "" {
+		query += fmt.Sprintf("WHERE eventType = '%s' ", filter.EventType)
+	}
+	if filter.EventType == "" && filter.From != "" {
+		query += fmt.Sprintf("WHERE eventTime > '%s' AND eventTime < '%s'", filter.From, filter.To)
+	}
+	if filter.EventType != "" && filter.From != "" {
+		query += fmt.Sprintf("WHERE eventType = '%s' AND eventTime > '%s' AND eventTime < '%s'", filter.EventType, filter.From, filter.To)
+	}
+	fmt.Printf("query: %v\n", query)
+
+	rows, err := r.Conn.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		event := new(model.Event)
+		if err := rows.Scan(&event.EventID, &event.EventType, &event.UserID, &event.EventTime, &event.Payload); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	return events, err
 }
 
 func (r *Repository) CreateEvent(event *model.Event) error {
